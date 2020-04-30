@@ -98,7 +98,7 @@ class _State extends State<mainCode> {
                     AppLocalizations.of(context).translate('weldedSection'),
                     _radius),
                 _cardDrawer(
-                    'assets/main_image/icon_cold_formed.svg',
+                    'assets/main_image/icon_coldr.svg',
                     AppLocalizations.of(context).translate('coldFormedSection'),
                     _radius),
               ],
@@ -725,6 +725,7 @@ class _State extends State<mainCode> {
 
   _listViewHorisental() {
     return ListView.builder(
+      shrinkWrap: true,
       scrollDirection: Axis.horizontal,
       itemCount: list.length,
       itemBuilder: (context, i) {

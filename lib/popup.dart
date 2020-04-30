@@ -10,7 +10,7 @@ class PopupLayout extends ModalRoute {
   final Widget child;
 
   @override
-  Duration get transitionDuration => Duration(milliseconds: 3);
+  Duration get transitionDuration => Duration(milliseconds: 30);
 
   @override
   bool get opaque => false;

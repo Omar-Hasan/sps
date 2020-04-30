@@ -273,6 +273,30 @@ class _detailsState extends State<details> {
     );
   }
 
+  void choiceAction(String choice) {
+    if (choice == Constants.symbols) {
+      Widget _popupBody() {
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: color.White,
+          padding: EdgeInsets.all(3),
+          child: ListView(
+            children: <Widget>[
+              Text(AppLocalizations.of(context).translate('meaningOFSYMBOLE')
+                ,style: Theme.of(context).textTheme.display2,),
+            ],
+          ),
+        );
+      }
+      showPopupRight(context, _popupBody(), 'title');
+    } else if (choice == Constants.Subscribe) {
+      print('Subscribe');
+    } else if (choice == Constants.SignOut) {
+      print('SignOut');
+    }
+  }
+
   _photo() {
     Widget _popupBody() {
       return Container(
@@ -401,30 +425,6 @@ class _detailsState extends State<details> {
         },
       ),
     );
-  }
-
-  void choiceAction(String choice) {
-    if (choice == Constants.symbols) {
-      Widget _popupBody() {
-        return Container(
-          width: double.infinity,
-          height: double.infinity,
-            color: color.White,
-            padding: EdgeInsets.all(3),
-            child: ListView(
-              children: <Widget>[
-                Text(AppLocalizations.of(context).translate('meaningOFSYMBOLE')
-                ,style: Theme.of(context).textTheme.display2,),
-              ],
-               ),
-          );
-      }
-      showPopupRight(context, _popupBody(), 'title');
-    } else if (choice == Constants.Subscribe) {
-      print('Subscribe');
-    } else if (choice == Constants.SignOut) {
-      print('SignOut');
-    }
   }
 
   _refreshValue(String name) {

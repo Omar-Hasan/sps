@@ -16,13 +16,13 @@ class mainUser extends StatefulWidget {
   @override
   _State createState() => _State();
   static String x_section = "I_section";
+  static String imageDetails = 'assets/code_image/details_ipn';
   static final myController = TextEditingController();
   static final hController = TextEditingController();
   static final bController = TextEditingController();
   static final tfController = TextEditingController();
   static final twController = TextEditingController();
   static final rController = TextEditingController();
-  static String imageDetails = 'assets/code_image/details_ipn';
 }
 
 class _State extends State<mainUser> {
@@ -103,7 +103,7 @@ class _State extends State<mainUser> {
                       AppLocalizations.of(context).translate('weldedSection'),
                       _radius),
                   _cardDrawer(
-                      'assets/main_image/icon_cold_formed.svg',
+                      'assets/main_image/icon_coldr.svg',
                       AppLocalizations.of(context).translate(
                           'coldFormedSection'),
                       _radius),
@@ -122,14 +122,14 @@ class _State extends State<mainUser> {
               child: Column(
                 children: <Widget>[
                   _header(
-                      AppLocalizations.of(context).translate('userSection')),
+                      AppLocalizations.of(context).translate('userSectiont')),
                   new Container(
                       width: double.infinity,
                       height: 70,
                       color: color.gray,
                       child: _listViewHorisental()),
                   _desqription(),
-                  //_rowUserProperty(),
+                  _rowUserProperty(),
                   new Expanded(
                     child: new Container(
                       width: double.infinity,
@@ -201,6 +201,7 @@ class _State extends State<mainUser> {
 
   _listViewHorisental() {
     return ListView.builder(
+      shrinkWrap: true,
       scrollDirection: Axis.horizontal,
       itemCount: list.length,
       itemBuilder: (context, i) {
@@ -890,6 +891,29 @@ class _State extends State<mainUser> {
     }
   }
 
+  _rulerPicker() {
+    return RulerPicker(
+      controller: _rulerPickerController,
+      backgroundColor: color.red,
+      onValueChange: (value) {
+        setState(() {
+          _textEditingController.text = value.toString();
+          h_FocusNode ? mainUser.hController.text = _textEditingController.text :
+          b_FocusNode ? mainUser.bController.text = _textEditingController.text :
+          tw_FocusNode ?
+          mainUser.twController.text = _textEditingController.text :
+          tf_FocusNode ?
+          mainUser.tfController.text = _textEditingController.text :
+          mainUser.rController.text = _textEditingController.text;
+        });
+      },
+      width: MediaQuery
+          .of(context)
+          .size
+          .width,
+    );
+  }
+
   bool readOnly = true;
 
   _textFiled(bool focusNode, TextEditingController controller, bool vertical,
@@ -946,28 +970,6 @@ class _State extends State<mainUser> {
     );
   }
 
-  _rulerPicker() {
-    return RulerPicker(
-      controller: _rulerPickerController,
-      backgroundColor: color.red,
-      onValueChange: (value) {
-        setState(() {
-          _textEditingController.text = value.toString();
-          h_FocusNode ? mainUser.hController.text = _textEditingController.text :
-          b_FocusNode ? mainUser.bController.text = _textEditingController.text :
-          tw_FocusNode ?
-          mainUser.twController.text = _textEditingController.text :
-          tf_FocusNode ?
-          mainUser.tfController.text = _textEditingController.text :
-          mainUser.rController.text = _textEditingController.text;
-        });
-      },
-      width: MediaQuery
-          .of(context)
-          .size
-          .width,
-    );
-  }
 
   _setFoucus(TextEditingController controller) {
     h_FocusNode = false;
