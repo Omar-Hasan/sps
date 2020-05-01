@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:stahl_section/DXFDocument.dart';
 import 'package:stahl_section/color/color.dart';
 import 'package:stahl_section/foundations/main.dart';
 import 'package:stahl_section/translate/app_localizations.dart';
@@ -12,6 +13,7 @@ import 'design_foundations.dart';
 class Results extends StatefulWidget {
   @override
   _ResultsState createState() => _ResultsState();
+  static DXFDocument dxf = new DXFDocument(1000);
 }
 
 class _ResultsState extends State<Results> {
@@ -103,6 +105,8 @@ class _ResultsState extends State<Results> {
     BarPaint.color = color.red;
     BarPaint.isAntiAlias = true;
     BarPaint.style = PaintingStyle.fill;
+
+    Results.dxf = new DXFDocument(1000);
   }
 
   @override
@@ -553,6 +557,70 @@ class _ResultsState extends State<Results> {
     }
     c.drawLine(start, end, paint);
   }
+  static _drawDimentionDXF(double plusH,double scale, double teta, double Xstart, double Ystart,
+      double Xend, double Yend, Paint paint, String s, Paint paintText) {
+    //rect_lenght = rect_Hlenght = rect_Vlenght_reight = rect_Vlenght_left = rect_Dlenght = rect_radus = rect_lip = new Rect.fromLTRB();
+    TextStyle textStyle = new TextStyle(
+        fontSize: 20, color: paintText.color, fontWeight: FontWeight.normal);
+    Offset start = new Offset(Xstart, Ystart);
+    Offset end = new Offset(Xend, Yend);
+    if (start.dx == end.dx && start.dy == end.dy) {
+      return;
+    }
+    int ca = 5;
+    TextSpan span = new TextSpan(style: textStyle, text: s);
+    TextPainter tp = new TextPainter(
+        text: span,
+        textAlign: TextAlign.left,
+        textDirection: TextDirection.ltr);
+    tp.layout();
+    if (start.dx == end.dx) {
+      Results.dxf.drawLine(plusH,scale,Offset(start.dx + ca, start.dy),
+          Offset(start.dx - ca, start.dy), paint);
+      Results.dxf.drawLine(plusH,scale,
+          Offset(end.dx + ca, end.dy), Offset(end.dx - ca, end.dy), paint);
+      Results.dxf.rotate(3 * pi / 2);
+      if (start.dy > end.dy) {
+        Results.dxf.drawText(plusH,scale, span,
+            new Offset(
+                start.dx + tp.height,
+                (start.dy + end.dy) / 2 + tp.width/2));
+      } else {
+        Results.dxf.drawText(plusH,scale, span,new Offset(start.dx - tp.height,
+            (start.dy + end.dy) / 2 + tp.width/2));
+       }
+      Results.dxf.rotate(-3 * pi / 2);
+    } else if (start.dy == end.dy) {
+      Results.dxf.drawLine(plusH,scale,Offset(start.dx, start.dy - ca),
+          Offset(start.dx, start.dy + ca), paint);
+      Results.dxf.drawLine(plusH,scale,
+          Offset(end.dx, end.dy - ca), Offset(end.dx, end.dy + ca), paint);
+      if (start.dx < end.dx) {
+        Results.dxf.drawText(plusH,scale, span,
+            new Offset((end.dx + start.dx) / 2 - tp.width / 2, start.dy + ca));
+        /*rect_lenght = new Rect.fromLTRB(
+            (end.dx + start.dx) / 2 - tp.width / 2 - ca,
+            start.dy,
+            (end.dx + start.dx) / 2 + tp.width / 2 + ca,
+            start.dy + tp.height + ca * 2);*/
+      } else {
+        Results.dxf.drawText(plusH,scale, span,
+            new Offset((end.dx + start.dx) / 2 - tp.width / 2,
+                start.dy - 0 - tp.height));
+      }
+    } else {
+      double cosTeta = sin((teta));
+      double sinTeta = cos((teta));
+      Results.dxf.drawLine(plusH,scale,Offset(start.dx - ca * cosTeta, start.dy + ca * sinTeta),
+          Offset(start.dx + ca * cosTeta, start.dy - ca * sinTeta), paint);
+      Results.dxf.drawLine(plusH,scale,Offset(end.dx - ca * cosTeta, end.dy + ca * sinTeta),
+          Offset(end.dx + ca * cosTeta, end.dy - ca * sinTeta), paint);
+      Results.dxf.rotate(teta);
+      Results.dxf.drawText(plusH,scale, span, new Offset((end.dx + start.dx) / 2 - tp.width / 2, (end.dy + start.dy) / 2 - tp.height));
+      Results.dxf.rotate(-teta);
+     }
+    Results.dxf.drawLine(plusH,scale, start, end, paint);
+  }
 
   static _drawArrowForce(Canvas canvas, Offset point, Paint textPaint,
       double height, String textP) {
@@ -590,6 +658,16 @@ class _ResultsState extends State<Results> {
     tp.layout();
     tp.paint(canvas, new Offset(x - tp.width / 2, y-tp.height/2));
   }
+  static _drawTextCenterDXF(double plusH,double scale, Paint paint, String text, double x, double y) {
+    TextStyle textStyle = new TextStyle(color: paint.color,fontSize: 18,fontWeight: FontWeight.bold);
+    TextSpan span = new TextSpan(style: textStyle, text: text);
+    TextPainter tp = new TextPainter(
+        text: span,
+        textAlign: TextAlign.left,
+        textDirection: TextDirection.ltr);
+    tp.layout();
+    Results.dxf.drawText(plusH,scale, span, new Offset(x - tp.width / 2, y + tp.height / 2));
+  }
   static _drawTextLeft(Canvas canvas, Paint paint, String text, double x, double y) {
     TextStyle textStyle = new TextStyle(color: paint.color,fontSize: 18,fontWeight: FontWeight.bold);
     TextSpan span = new TextSpan(style: textStyle, text: text);
@@ -619,7 +697,7 @@ class draw_IsolatedFoundation1 extends CustomPainter {
   Paint paint0, textPaint;
   BuildContext context;
   bool withMoment = false;
-  String fie = 'Փ', mm2 = 'mm²';
+  String fie = 'Փ', mm2 = 'mm²', test;
   draw_IsolatedFoundation1(this.context, this.paint0, this.textPaint,
       {this.withMoment});
 
@@ -654,23 +732,26 @@ class draw_IsolatedFoundation1 extends CustomPainter {
     point[6] = new Offset(point[5].dx, point[3].dy);
     point[7] = new Offset(point[0].dx, point[3].dy);
 
+    double plusH =0;
     for (int i = 0; i < 4; i++) {
       canvas.drawLine(point[i], point[i + 1], paint0);
+      Results.dxf.drawLine(0,1/scale,point[i], point[i + 1], paint0);
     }
     for (int i = 5; i < 7; i++) {
       canvas.drawLine(point[i], point[i + 1], paint0);
+      Results.dxf.drawLine(plusH,1/scale,point[i], point[i + 1], paint0);
     }
     canvas.drawLine(point[0], point[7], paint0);
+    Results.dxf.drawLine(plusH,1/scale,point[0], point[7], paint0);
 
     Rect rect =
     new Rect.fromLTRB(point[0].dx-clean, point[0].dy, point[1].dx+clean, point[0].dy+clean);
     canvas.drawRect(rect, paint0);
+    Results.dxf.drawRect(0,1/scale,rect, paint0);
 
     for (int i = 0; i < (A+2*clean) / clean; i++) {
-      canvas.drawLine(
-          Offset(point[0].dx - clean + clean * (i), point[0].dy + clean),
-          Offset(point[0].dx - clean + clean * (i + 1), point[0].dy),
-          paint0);
+      canvas.drawLine(Offset(point[0].dx - clean + clean * (i), point[0].dy + clean), Offset(point[0].dx - clean + clean * (i + 1), point[0].dy), paint0);
+      Results.dxf.drawLine(plusH,1/scale,Offset(point[0].dx - clean + clean * (i), point[0].dy + clean), Offset(point[0].dx - clean + clean * (i + 1), point[0].dy), paint0);
     }
 
     //رسم التسليح
@@ -691,17 +772,24 @@ class draw_IsolatedFoundation1 extends CustomPainter {
     double lip = min(30*scale,height/2);
     canvas.drawLine(Offset(rect.right,rect.bottom-lip), Offset(rect.right-diameterReiBar/2,rect.bottom-lip-diameterReiBar/2), textPaint);
     canvas.drawLine(Offset(rect.left,rect.bottom-lip), Offset(rect.left+diameterReiBar/2,rect.bottom-lip-diameterReiBar/2), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(rect.right,rect.bottom-lip), Offset(rect.right-diameterReiBar/2,rect.bottom-lip-diameterReiBar/2), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(rect.left,rect.bottom-lip), Offset(rect.left+diameterReiBar/2,rect.bottom-lip-diameterReiBar/2), textPaint);
+    Results.dxf.drawRect(0,1/scale,rect, textPaint);
 
     List<Offset> pR = new List(numbreBar+1);
     pR[0] = new Offset(point[0].dx + tCoverRieght + diameterReiBar / 2,
         point[0].dy - tCoverRieght - diameterReiBar / 2);
     for (int i = 0; i < numbreBar; i++) {
       canvas.drawCircle(pR[i], diameterReiBar / 2, textPaint);
+      Results.dxf.drawCircle(plusH,1/scale,pR[i], diameterReiBar / 2, textPaint);
+     // Results.dxf.drawPoint(pR[i], diameterReiBar / 2, textPaint);
       pR[i+1] = new Offset(pR[i].dx + d_barLips + diameterReiBar, pR[i].dy);
     }
     //قضيب ربط حيطي
     canvas.drawCircle(Offset(pR[0].dx-diameterReiBar/4,pR[0].dy-height+tCoverRieght*2+3 * diameterReiBar/4), diameterReiBar / 4, textPaint);
     canvas.drawCircle(Offset(pR[numbreBar-1].dx+diameterReiBar/4,pR[numbreBar-1].dy-height+tCoverRieght*2+3 * diameterReiBar/ 4), diameterReiBar / 4, textPaint);
+    Results.dxf.drawCircle(plusH,1/scale,Offset(pR[0].dx-diameterReiBar/4,pR[0].dy-height+tCoverRieght*2+3 * diameterReiBar/4), diameterReiBar / 4, textPaint);
+    Results.dxf.drawCircle(plusH,1/scale,Offset(pR[numbreBar-1].dx+diameterReiBar/4,pR[numbreBar-1].dy-height+tCoverRieght*2+3 * diameterReiBar/ 4), diameterReiBar / 4, textPaint);
 
     double colxDis = (point[4].dx - point[5].dx-tCoverRieght)/3;
     List<Offset> colRie = new List(4);
@@ -714,9 +802,16 @@ class draw_IsolatedFoundation1 extends CustomPainter {
     canvas.drawLine(colRie[2], Offset(colRie[2].dx,point[0].dy-diameterReiBar*2-tCoverRieght), textPaint);
     canvas.drawLine(colRie[3], Offset(colRie[3].dx,point[0].dy-diameterReiBar*2-tCoverRieght), textPaint);
     canvas.drawLine(Offset(colRie[3].dx,point[0].dy-diameterReiBar*2-tCoverRieght), Offset(colRie[0].dx+tCoverRieght/2,point[0].dy-diameterReiBar*2-tCoverRieght), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,colRie[0], Offset(colRie[0].dx,point[0].dy-diameterReiBar-tCoverRieght), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(colRie[0].dx,point[0].dy-diameterReiBar-tCoverRieght), Offset(colRie[3].dx-tCoverRieght/2,point[0].dy-diameterReiBar-tCoverRieght), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,colRie[1], Offset(colRie[1].dx,point[0].dy-diameterReiBar-tCoverRieght), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,colRie[2], Offset(colRie[2].dx,point[0].dy-diameterReiBar*2-tCoverRieght), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,colRie[3], Offset(colRie[3].dx,point[0].dy-diameterReiBar*2-tCoverRieght), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(colRie[3].dx,point[0].dy-diameterReiBar*2-tCoverRieght), Offset(colRie[0].dx+tCoverRieght/2,point[0].dy-diameterReiBar*2-tCoverRieght), textPaint);
     for (int i = 0; i < 4; i++) {
       colRie[i] = Offset(colRie[i].dx,point[3].dy - neck);
       canvas.drawLine(Offset(colRie[0].dx , colRie[0].dy+neck/5*(i+1)), Offset(colRie[3].dx , colRie[0].dy+neck/5*(i+1)), textPaint);
+      Results.dxf.drawLine(plusH,1/scale,Offset(colRie[0].dx , colRie[0].dy+neck/5*(i+1)), Offset(colRie[3].dx , colRie[0].dy+neck/5*(i+1)), textPaint);
     }
     canvas.drawLine(colRie[0], Offset(colRie[0].dx + colxDis / 3 , colRie[0].dy - colxDis /3), textPaint);
     canvas.drawLine(colRie[1], Offset(colRie[1].dx + colxDis / 3 , colRie[1].dy - colxDis /3), textPaint);
@@ -726,11 +821,27 @@ class draw_IsolatedFoundation1 extends CustomPainter {
     canvas.drawLine(Offset(colRie[1].dx , point[3].dy), Offset(colRie[1].dx + colxDis / 3 , point[3].dy + colxDis /3), textPaint);
     canvas.drawLine(Offset(colRie[2].dx , point[3].dy), Offset(colRie[2].dx - colxDis / 3 , point[3].dy + colxDis /3), textPaint);
     canvas.drawLine(Offset(colRie[3].dx , point[3].dy), Offset(colRie[3].dx - colxDis / 3 , point[3].dy + colxDis /3), textPaint);
-
+    Results.dxf.drawLine(plusH,1/scale,colRie[0], Offset(colRie[0].dx + colxDis / 3 , colRie[0].dy - colxDis /3), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,colRie[1], Offset(colRie[1].dx + colxDis / 3 , colRie[1].dy - colxDis /3), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,colRie[2], Offset(colRie[2].dx - colxDis / 3 , colRie[2].dy - colxDis /3), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,colRie[3], Offset(colRie[3].dx - colxDis / 3 , colRie[3].dy - colxDis /3), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(colRie[0].dx , point[3].dy), Offset(colRie[0].dx + colxDis / 3 , point[3].dy + colxDis /3), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(colRie[1].dx , point[3].dy), Offset(colRie[1].dx + colxDis / 3 , point[3].dy + colxDis /3), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(colRie[2].dx , point[3].dy), Offset(colRie[2].dx - colxDis / 3 , point[3].dy + colxDis /3), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(colRie[3].dx , point[3].dy), Offset(colRie[3].dx - colxDis / 3 , point[3].dy + colxDis /3), textPaint);
 
     double paddingDimention = 15 * scale;
     _ResultsState._drawDimention(
         canvas,
+        pi / 2,
+        point[1].dx + paddingDimention,
+        point[1].dy,
+        point[2].dx + paddingDimention,
+        point[2].dy,
+        paint0,
+        '${_ResultsState.Height}cm',
+        paint0);
+    _ResultsState._drawDimentionDXF(plusH,1/scale,
         pi / 2,
         point[1].dx + paddingDimention,
         point[1].dy,
@@ -759,12 +870,33 @@ class draw_IsolatedFoundation1 extends CustomPainter {
         paint0,
         '5cm',
         paint0);
+    _ResultsState._drawDimentionDXF(plusH,1/scale,
+        pi / 2,
+        point[6].dx - paddingDimention,
+        colRie[0].dy ,
+        point[6].dx - paddingDimention,
+        point[6].dy,
+        paint0,
+        '50 $fie',
+        paint0);
+    _ResultsState._drawDimentionDXF(plusH,1/scale,
+        pi / 2,
+        pR[numbreBar-1].dx - d_barLips/2,
+        rect.bottom,
+        pR[numbreBar-1].dx - d_barLips/2,
+        point[0].dy ,
+        paint0,
+        '5cm',
+        paint0);
     double dCircle = 18*scale;
     Offset pDetail = new Offset(pR[0].dx+d_barLips/2+diameterReiBar/2, rect.bottom);
     _drawDetailInCircle(canvas, scale, pDetail, dCircle,'1','2', textPaint);
+    _drawDetailInCircleDXF(plusH,Results.dxf, scale, pDetail, dCircle,'1','2', textPaint);
     pDetail = new Offset(pR[(numbreBar/2).round()].dx, rect.bottom);
+    _drawDetailInCircleDXF(plusH,Results.dxf, scale, pDetail, dCircle,'3','4', textPaint);
     _drawDetailInCircle(canvas, scale, pDetail, dCircle,'3','4', textPaint);
   }
+
   _drawDetailInCircle(Canvas canvas,double scale, Offset pDetail,double dCircle,String txt1,String txt2, Paint textPaint){
     canvas.drawLine(pDetail, Offset(pDetail.dx,pDetail.dy + 40*scale), textPaint);
     canvas.drawLine(Offset(pDetail.dx,pDetail.dy + 40*scale), Offset(pDetail.dx+dCircle*2,pDetail.dy + 40*scale), textPaint);
@@ -775,6 +907,16 @@ class draw_IsolatedFoundation1 extends CustomPainter {
     canvas.drawCircle(Offset(pDetail.dx+dCircle+4+18,pDetail.dy + 40*scale - dCircle/2-1), dCircle/2, textPaint);
     _ResultsState._drawTextCenter(canvas, textPaint,txt2,pDetail.dx+dCircle+4+18,pDetail.dy + 40*scale - dCircle/2-1);
 
+  }
+  _drawDetailInCircleDXF(double plusH,DXFDocument canvas,double scale, Offset pDetail,double dCircle,String txt1,String txt2, Paint textPaint){
+    canvas.drawLine(plusH,1/scale,pDetail, Offset(pDetail.dx,pDetail.dy + 40), textPaint);
+    canvas.drawLine(plusH,1/scale,Offset(pDetail.dx,pDetail.dy + 40), Offset(pDetail.dx + dCircle * 2 ,pDetail.dy + 40), textPaint);
+    textPaint.style = PaintingStyle.stroke;
+    canvas.drawCircle(plusH,1/scale,Offset(pDetail.dx+dCircle/2+1,pDetail.dy + 40 - dCircle/2-1), dCircle/2, textPaint);
+    _ResultsState._drawTextCenterDXF(plusH,1/scale, textPaint,txt1,pDetail.dx+dCircle/2+1,pDetail.dy + 40 - dCircle/2-1);
+    _ResultsState._drawTextCenterDXF(plusH,1/scale, textPaint,'+',pDetail.dx+dCircle/2+18,pDetail.dy + 40 - dCircle/2-1);
+    canvas.drawCircle(plusH,1/scale,Offset(pDetail.dx+dCircle+4+18,pDetail.dy + 40 - dCircle/2-1), dCircle/2, textPaint);
+    _ResultsState._drawTextCenterDXF(plusH,1/scale, textPaint,txt2,pDetail.dx+dCircle+4+18,pDetail.dy + 40 - dCircle/2-1);
   }
 
   @override
@@ -787,7 +929,7 @@ class draw_IsolatedFoundation2 extends CustomPainter {
   Paint paint0, textPaint;
   BuildContext context;
   bool withMoment = false;
-  String fie = 'Փ', mm2 = 'mm²';
+  String fie = 'Փ', mm2 = 'mm²',test;
   draw_IsolatedFoundation2(this.context, this.paint0, this.textPaint,
       {this.withMoment});
 
@@ -814,6 +956,7 @@ class draw_IsolatedFoundation2 extends CustomPainter {
     int B2L = _ResultsState.B2L;
     int B2n = _ResultsState.B2n;
 
+    double plusH = 250 + height;
     double clean = 5;
     double scale = min(size.width * 0.9 / (A + 30 + clean * 2),
         size.height * 0.9 / (clean *2 +B +30));
@@ -831,10 +974,18 @@ class draw_IsolatedFoundation2 extends CustomPainter {
     point[2] = new Offset(point[1].dx, point[1].dy + B);
     point[3] = new Offset(point[0].dx, point[1].dy + B);
 
+    List<Offset> pointDXF = new List(4);
+    pointDXF[0] = new Offset(centerX - A/2 , centerY - B / 2 + plusH);
+    pointDXF[1] = new Offset(point[0].dx +A, point[0].dy );
+    pointDXF[2] = new Offset(point[1].dx, point[1].dy + B );
+    pointDXF[3] = new Offset(point[0].dx, point[1].dy + B );
+
     Rect rect = new Rect.fromLTRB(point[0].dx, point[0].dy, point[1].dx, point[3].dy);
     canvas.drawRect(rect, paint0);
+    Results.dxf.drawRect(plusH,1/scale,rect, paint0);
     rect = new Rect.fromLTRB(point[0].dx-clean, point[0].dy-clean, point[1].dx+clean, point[3].dy+clean);
     canvas.drawRect(rect, paint0);
+    Results.dxf.drawRect(plusH,1/scale,rect, paint0);
 
     Offset centerColumn = new Offset(centerX, point[0].dy + B / 2);
     rect = new Rect.fromLTRB(
@@ -843,8 +994,9 @@ class draw_IsolatedFoundation2 extends CustomPainter {
         centerColumn.dx + a / 2,
         centerColumn.dy + b / 2);
     canvas.drawRect(rect, paint0);
+    Results.dxf.drawRect(plusH,1/scale,rect, paint0);
 
-   _hatch(canvas,rect);
+    _hatch(canvas,rect,plusH,1/scale);
 
     //رسم التسليح
     //AsA1
@@ -856,71 +1008,59 @@ class draw_IsolatedFoundation2 extends CustomPainter {
         point[2].dx - tCoverRieght,
         point[3].dy - tCoverRieght*2);
     textPaint.style = PaintingStyle.stroke;
-    _drawDetailAs1(canvas, scale, rect, '${_ResultsState.AsA1D}', 'L = ${A1L}cm','1', textPaint);
+    _drawDetailAs1(plusH,canvas, scale, rect, '${_ResultsState.AsA1D}', 'L = ${A1L}cm','1', textPaint);
     rect = new Rect.fromLTRB(
-        point[2].dx - tCoverRieght*2 - min(30*scale,height/2),
+      point[2].dx - tCoverRieght*2 - min(30*scale,height/2),
       point[1].dy + tCoverRieght ,
       point[2].dx - tCoverRieght*2,
       point[3].dy - tCoverRieght,
     );
-    _drawDetailBs1(canvas, scale, rect, '${_ResultsState.AsB1D}', 'L = ${B1L}cm','3', textPaint);
+    _drawDetailBs1(plusH, canvas, scale, rect, '${_ResultsState.AsB1D}', 'L = ${B1L}cm','3', textPaint);
     tCoverRieght = 3*scale;
     rect = new Rect.fromLTRB(
         point[3].dx + tCoverRieght,
         centerY + b/2 - tCoverRieght - height - 10*scale,
         point[2].dx - tCoverRieght,
         centerY + b/2 - tCoverRieght);
-    _drawDetailAs2(canvas, scale, rect, '${_ResultsState.AsA2D}', 'L = ${A2L}cm','2', textPaint);
+    _drawDetailAs2(plusH, canvas, scale, rect, '${_ResultsState.AsA2D}', 'L = ${A2L}cm','2', textPaint);
     rect = new Rect.fromLTRB(
       centerX - tCoverRieght + a/2 - height - 10*scale ,
       point[1].dy + tCoverRieght ,
       centerX - tCoverRieght + a/2,
       point[3].dy - tCoverRieght,
     );
-    _drawDetailBs2(canvas, scale, rect, '${_ResultsState.AsB2D}', 'L = ${B2L}cm','4', textPaint);
+    _drawDetailBs2(plusH, canvas, scale, rect, '${_ResultsState.AsB2D}', 'L = ${B2L}cm','4', textPaint);
+    test = Results.dxf.toDXFString();
 
     //اللأبعاد
     double paddingDimention = 15 * scale;
-    _ResultsState._drawDimention(
-        canvas,
-        pi / 2,
-        point[1].dx,
-        point[1].dy - paddingDimention,
-        point[0].dx,
-        point[0].dy - paddingDimention,
-        paint0,
-        '${_ResultsState.A} cm',
-        paint0);
-    _ResultsState._drawDimention(
-        canvas,
-        pi / 2,
-        point[0].dx - paddingDimention,
-        point[0].dy,
-        point[0].dx - paddingDimention,
-        point[3].dy,
-        paint0,
-        '${_ResultsState.B} cm',
-        paint0);
+    _ResultsState._drawDimention(canvas, pi / 2, point[1].dx, point[1].dy - paddingDimention, point[0].dx, point[0].dy - paddingDimention, paint0, '${_ResultsState.A} cm', paint0);
+    _ResultsState._drawDimention(canvas, pi / 2, point[0].dx - paddingDimention, point[0].dy, point[0].dx - paddingDimention, point[3].dy, paint0, '${_ResultsState.B} cm', paint0);
     _ResultsState._drawDimention(canvas, pi / 2, point[3].dx, point[3].dy + paddingDimention, point[3].dx + (A-a)/2, point[2].dy + paddingDimention, paint0, '${A_a2} cm', paint0);
     _ResultsState._drawDimention(canvas, pi / 2, point[3].dx + (A-a)/2, point[3].dy + paddingDimention, point[3].dx + (A-a)/2 + a, point[2].dy + paddingDimention, paint0, '${_ResultsState.a} cm', paint0);
     _ResultsState._drawDimention(canvas, pi / 2, point[3].dx+ (A-a)/2 + a, point[3].dy + paddingDimention, point[2].dx, point[2].dy + paddingDimention, paint0, '${A_a2} cm', paint0);
-    _ResultsState._drawDimention(canvas,pi / 2,
-        point[2].dx + paddingDimention, point[2].dy,
-        point[1].dx + paddingDimention, point[2].dy - (B-b)/2, paint0,
-        '${B_b2} cm', paint0);
-    _ResultsState._drawDimention(canvas,pi / 2,
-        point[2].dx + paddingDimention, point[2].dy- (B-b)/2,
-        point[1].dx + paddingDimention, point[2].dy - (B-b)/2 - b, paint0,
-        '${_ResultsState.b} cm', paint0);
-    _ResultsState._drawDimention(canvas,pi / 2,
-        point[2].dx + paddingDimention, point[2].dy - (B-b)/2 - b,
-        point[1].dx + paddingDimention, point[1].dy, paint0,
-        '${B_b2} cm', paint0);
+    _ResultsState._drawDimention(canvas, pi / 2, point[2].dx + paddingDimention, point[2].dy, point[1].dx + paddingDimention, point[2].dy - (B-b)/2, paint0, '${B_b2} cm', paint0);
+    _ResultsState._drawDimention(canvas, pi / 2, point[2].dx + paddingDimention, point[2].dy- (B-b)/2, point[1].dx + paddingDimention, point[2].dy - (B-b)/2 - b, paint0, '${_ResultsState.b} cm', paint0);
+    _ResultsState._drawDimention(canvas, pi / 2, point[2].dx + paddingDimention, point[2].dy - (B-b)/2 - b, point[1].dx + paddingDimention, point[1].dy, paint0, '${B_b2} cm', paint0);
+
+    _ResultsState._drawDimentionDXF(plusH, 1/scale, pi / 2, point[1].dx, point[1].dy - paddingDimention, point[0].dx, point[0].dy - paddingDimention, paint0, '${_ResultsState.A} cm', paint0);
+    _ResultsState._drawDimentionDXF(plusH, 1/scale, pi / 2, point[0].dx - paddingDimention, point[0].dy, point[0].dx - paddingDimention, point[3].dy, paint0, '${_ResultsState.B} cm', paint0);
+    _ResultsState._drawDimentionDXF(plusH, 1/scale, pi / 2, point[3].dx, point[3].dy + paddingDimention, point[3].dx + (A-a)/2, point[2].dy + paddingDimention, paint0, '${A_a2} cm', paint0);
+    _ResultsState._drawDimentionDXF(plusH, 1/scale, pi / 2, point[3].dx + (A-a)/2, point[3].dy + paddingDimention, point[3].dx + (A-a)/2 + a, point[2].dy + paddingDimention, paint0, '${_ResultsState.a} cm', paint0);
+    _ResultsState._drawDimentionDXF(plusH, 1/scale, pi / 2, point[3].dx+ (A-a)/2 + a, point[3].dy + paddingDimention, point[2].dx, point[2].dy + paddingDimention, paint0, '${A_a2} cm', paint0);
+    _ResultsState._drawDimentionDXF(plusH, 1/scale, pi / 2, point[2].dx + paddingDimention, point[2].dy, point[1].dx + paddingDimention, point[2].dy - (B-b)/2, paint0, '${B_b2} cm', paint0);
+    _ResultsState._drawDimentionDXF(plusH, 1/scale, pi / 2, point[2].dx + paddingDimention, point[2].dy- (B-b)/2, point[1].dx + paddingDimention, point[2].dy - (B-b)/2 - b, paint0, '${_ResultsState.b} cm', paint0);
+    _ResultsState._drawDimentionDXF(plusH, 1/scale, pi / 2, point[2].dx + paddingDimention, point[2].dy - (B-b)/2 - b, point[1].dx + paddingDimention, point[1].dy, paint0, '${B_b2} cm', paint0);
+
+    test = Results.dxf.toDXFString();
   }
-  _drawDetailAs1(Canvas canvas,double scale,Rect rect, String txt1, String txt2, String txtC, Paint textPaint){
+  _drawDetailAs1(double plusH,Canvas canvas,double scale,Rect rect, String txt1, String txt2, String txtC, Paint textPaint){
     canvas.drawLine(Offset(rect.left,rect.top), Offset(rect.left,rect.bottom), textPaint);
     canvas.drawLine(Offset(rect.left,rect.bottom), Offset(rect.right,rect.bottom), textPaint);
     canvas.drawLine(Offset(rect.right,rect.top), Offset(rect.right,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(rect.left,rect.top), Offset(rect.left,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(rect.left,rect.bottom), Offset(rect.right,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(rect.right,rect.top), Offset(rect.right,rect.bottom), textPaint);
     Offset ptxt = new Offset(rect.left+2*scale, rect.bottom-2*scale);
     TextStyle textStyle = new TextStyle(color: textPaint.color,fontSize: 18,fontWeight: FontWeight.bold);
     TextSpan span = new TextSpan(style: textStyle, text: txt1);
@@ -930,10 +1070,13 @@ class draw_IsolatedFoundation2 extends CustomPainter {
         textDirection: TextDirection.ltr);
     tp.layout();
     tp.paint(canvas, new Offset(ptxt.dx , ptxt.dy-tp.height));
+    Results.dxf.drawText(plusH, 1/scale, span, Offset(ptxt.dx , ptxt.dy-tp.height));
     double dCircle = 18*scale;
     Offset pDetail = new Offset(ptxt.dx + 3*scale +tp.width + dCircle/2, ptxt.dy - tp.height/2);
     canvas.drawCircle(Offset(pDetail.dx,pDetail.dy), dCircle/2, textPaint);
+    Results.dxf.drawCircle(plusH,1/scale,Offset(pDetail.dx,pDetail.dy), dCircle/2, textPaint);
     _ResultsState._drawTextCenter(canvas, textPaint,txtC,pDetail.dx,pDetail.dy);
+    _ResultsState._drawTextCenterDXF(plusH,1/scale, textPaint,txtC,pDetail.dx,pDetail.dy);
     ptxt = new Offset(ptxt.dx + 3*scale *2 +tp.width + dCircle, rect.bottom-2*scale);
     span = new TextSpan(style: textStyle, text: txt2);
     tp = new TextPainter(
@@ -942,9 +1085,11 @@ class draw_IsolatedFoundation2 extends CustomPainter {
         textDirection: TextDirection.ltr);
     tp.layout();
     tp.paint(canvas, new Offset(ptxt.dx , ptxt.dy-tp.height));
+    Results.dxf.drawText(plusH, 1/scale, span, new Offset(ptxt.dx , ptxt.dy-tp.height));
+
   }
 
-  _drawDetailAs2(Canvas canvas,double scale,Rect rect, String txt1, String txt2, String txtC, Paint textPaint){
+  _drawDetailAs2(double plusH, Canvas canvas,double scale,Rect rect, String txt1, String txt2, String txtC, Paint textPaint){
     double d = 2*scale;
     canvas.drawLine(Offset(rect.left,rect.top), Offset(rect.left,rect.bottom), textPaint);
     canvas.drawLine(Offset(rect.left,rect.bottom), Offset(rect.right-d,rect.bottom), textPaint);
@@ -952,6 +1097,12 @@ class draw_IsolatedFoundation2 extends CustomPainter {
     canvas.drawLine(Offset(rect.left + d,rect.top-d), Offset(rect.left+d,rect.bottom-d), textPaint);
     canvas.drawLine(Offset(rect.left+d,rect.top-d), Offset(rect.right,rect.top-d), textPaint);
     canvas.drawLine(Offset(rect.right,rect.top-d), Offset(rect.right,rect.bottom-d), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left,rect.top), Offset(rect.left,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left,rect.bottom), Offset(rect.right-d,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.right-d,rect.top), Offset(rect.right-d,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left + d,rect.top-d), Offset(rect.left+d,rect.bottom-d), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left+d,rect.top-d), Offset(rect.right,rect.top-d), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.right,rect.top-d), Offset(rect.right,rect.bottom-d), textPaint);
     Offset ptxt = new Offset(rect.left+2*scale, rect.bottom-2*scale);
     TextStyle textStyle = new TextStyle(color: textPaint.color,fontSize: 18,fontWeight: FontWeight.bold);
     TextSpan span = new TextSpan(style: textStyle, text: txt1);
@@ -975,10 +1126,13 @@ class draw_IsolatedFoundation2 extends CustomPainter {
     tp.paint(canvas, new Offset(ptxt.dx , ptxt.dy));
   }
 
-  _drawDetailBs1(Canvas canvas,double scale,Rect rect, String txt1, String txt2, String txtC, Paint textPaint){
+  _drawDetailBs1(double plusH,Canvas canvas,double scale,Rect rect, String txt1, String txt2, String txtC, Paint textPaint){
     canvas.drawLine(Offset(rect.left,rect.top), Offset(rect.right,rect.top), textPaint);
     canvas.drawLine(Offset(rect.left,rect.bottom), Offset(rect.right,rect.bottom), textPaint);
     canvas.drawLine(Offset(rect.right,rect.top), Offset(rect.right,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(rect.left,rect.top), Offset(rect.right,rect.top), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(rect.left,rect.bottom), Offset(rect.right,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH,1/scale,Offset(rect.right,rect.top), Offset(rect.right,rect.bottom), textPaint);
     Offset ptxt = new Offset(rect.right-2*scale, rect.bottom-2*scale);
     TextStyle textStyle = new TextStyle(color: textPaint.color,fontSize: 18,fontWeight: FontWeight.bold);
     TextSpan span = new TextSpan(style: textStyle, text: txt1);
@@ -1014,7 +1168,7 @@ class draw_IsolatedFoundation2 extends CustomPainter {
     canvas.translate(-ptxt.dx +tp.height/2, -ptxt.dy);
   }
 
-  _drawDetailBs2(Canvas canvas,double scale,Rect rect, String txt1, String txt2, String txtC, Paint textPaint){
+  _drawDetailBs2(double plusH,Canvas canvas,double scale,Rect rect, String txt1, String txt2, String txtC, Paint textPaint){
     double d = 2*scale;
     double dCircle = 18*scale;
     canvas.drawLine(Offset(rect.left,rect.top+d), Offset(rect.right,rect.top+d), textPaint);
@@ -1023,6 +1177,12 @@ class draw_IsolatedFoundation2 extends CustomPainter {
     canvas.drawLine(Offset(rect.left-d,rect.top), Offset(rect.right-d,rect.top), textPaint);
     canvas.drawLine(Offset(rect.left-d,rect.bottom-d), Offset(rect.right-d,rect.bottom-d), textPaint);
     canvas.drawLine(Offset(rect.left-d,rect.top), Offset(rect.left-d,rect.bottom-d), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left,rect.top+d), Offset(rect.right,rect.top+d), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left,rect.bottom), Offset(rect.right,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.right,rect.top+d), Offset(rect.right,rect.bottom), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left-d,rect.top), Offset(rect.right-d,rect.top), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left-d,rect.bottom-d), Offset(rect.right-d,rect.bottom-d), textPaint);
+    Results.dxf.drawLine(plusH, 1/scale, Offset(rect.left-d,rect.top), Offset(rect.left-d,rect.bottom-d), textPaint);
     Offset ptxt = new Offset(rect.right-2*scale, rect.top+2*scale+dCircle);
     TextStyle textStyle = new TextStyle(color: textPaint.color,fontSize: 18,fontWeight: FontWeight.bold);
     TextSpan span = new TextSpan(style: textStyle, text: txt1);
@@ -1062,12 +1222,16 @@ class draw_IsolatedFoundation2 extends CustomPainter {
     return true;
   }
 
-  void _hatch(Canvas canvas,Rect rect) {
+  void _hatch(Canvas canvas,Rect rect,double plusH,double scale) {
     double b = rect.height;
     double a = rect.width;
 
     for (int i = 0; i < 4 ; i++) {
       canvas.drawLine(
+          Offset(rect.left , rect.top + (b / 4) * (i + 1)),
+          Offset(rect.left + (b / 4) * (i + 1), rect.top),
+          paint0);
+      Results.dxf.drawLine(plusH,scale,
           Offset(rect.left , rect.top + (b / 4) * (i + 1)),
           Offset(rect.left + (b / 4) * (i + 1), rect.top),
           paint0);
@@ -1077,9 +1241,17 @@ class draw_IsolatedFoundation2 extends CustomPainter {
           Offset(rect.right , rect.top + (b / 4) * (i + 1)),
           Offset(rect.right - (b / 4) * (i + 1), rect.top),
           paint0);
+      Results.dxf.drawLine(plusH,scale,
+          Offset(rect.right , rect.top + (b / 4) * (i + 1)),
+          Offset(rect.right - (b / 4) * (i + 1), rect.top),
+          paint0);
     }
     for (int i = 0; i < 4 ; i++) {
       canvas.drawLine(
+          Offset(rect.left , rect.bottom - (b / 4) * (i + 1)),
+          Offset(rect.left + (b / 4) * (i + 1), rect.bottom),
+          paint0);
+      Results.dxf.drawLine(plusH,scale,
           Offset(rect.left , rect.bottom - (b / 4) * (i + 1)),
           Offset(rect.left + (b / 4) * (i + 1), rect.bottom),
           paint0);
@@ -1089,15 +1261,27 @@ class draw_IsolatedFoundation2 extends CustomPainter {
           Offset(rect.right , rect.bottom - (b / 4) * (i + 1)),
           Offset(rect.right - (b / 4) * (i + 1), rect.bottom),
           paint0);
+      Results.dxf.drawLine(plusH,scale,
+          Offset(rect.right , rect.bottom - (b / 4) * (i + 1)),
+          Offset(rect.right - (b / 4) * (i + 1), rect.bottom),
+          paint0);
     }
     for (int i = 0; i < ((a-b)/(b/4)).round()-1 ; i++) {
       canvas.drawLine(
           Offset(rect.left + (b / 4) * (i + 1), rect.top),
           Offset(rect.left + (b / 4) * (i + 5), rect.bottom),
           paint0);
+      Results.dxf.drawLine(plusH,scale,
+          Offset(rect.left + (b / 4) * (i + 1), rect.top),
+          Offset(rect.left + (b / 4) * (i + 5), rect.bottom),
+          paint0);
     }
     for (int i = 0; i < ((a-b)/(b/4)).round()-1 ; i++) {
       canvas.drawLine(
+          Offset(rect.right - (b / 4) * (i +1), rect.top),
+          Offset(rect.right - (b / 4) * (i +5), rect.bottom),
+          paint0);
+      Results.dxf.drawLine(plusH,scale,
           Offset(rect.right - (b / 4) * (i +1), rect.top),
           Offset(rect.right - (b / 4) * (i +5), rect.bottom),
           paint0);
