@@ -64,7 +64,7 @@ flutter:
         - asset: assets/fonts/seguisbi.ttf
     - family: SegoeUI_Italic
       fonts:
-        - asset: assets/fonts/segeouii.ttf
+        - asset: assets/fonts/segoeuii.ttf
     - family: SegoeUI_Light
       fonts:
         - asset: assets/fonts/SegoeUI-Light.ttf
